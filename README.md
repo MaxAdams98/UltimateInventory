@@ -12,6 +12,14 @@ A Spigot plugin to streamline inventory management
 
 This plugin was made for my private survival server. I've released it to the public spigot forums where others may find it useful.
 
+## Pick Block from Shulker Boxes
+
+When you pick a block (middle-click by default) and vanilla Minecraft fails to find it in your inventory, the plugin automatically searches your shulker boxes and places the item in your hotbar. The item swaps with the previous item in that slot if the slot wasn't empty. Works seamlessly with vanilla pick block - if the item is already in your inventory, vanilla behavior is used. If not, the plugin searches shulker boxes automatically.
+
+**Design:** Tools and shulker boxes cannot be moved/swapped by design to protect your inventory from accidental tool/shulker loss.
+
+**Requirements:** Install the [UltimateInventory Client Mod](UltimateInventoryClientMod/) on the client side for automatic pick block detection, or use the `/uipickblock <material>` command manually.
+
 ----
 
 ## **Caution: while every care has been taken to remove duplication bugs, some may remain.**

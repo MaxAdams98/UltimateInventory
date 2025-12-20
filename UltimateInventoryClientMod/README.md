@@ -1,21 +1,21 @@
 # UltimateInventory Client Mod
 
-Client-side mod for the UltimateInventory plugin. Detects middle-click pick block and searches shulker boxes when the item isn't in your inventory.
+Client-side mod for the UltimateInventory plugin. When you pick a block (middle-click by default) and vanilla Minecraft fails to find it in your inventory, this mod sends a request to the server plugin which searches your shulker boxes and places the item in your hotbar.
 
 ## Features
 
-- Detects middle-click pick block in creative mode
-- Gets the exact block/material being picked
-- Automatically communicates with server via scoreboard when item not found in inventory
+- Automatically detects when you pick a block and vanilla pick block fails
+- Sends requests to the UltimateInventory plugin to search shulker boxes
+- Works in survival and creative modes
 - Works with any block - no configuration needed
-- Uses efficient scoreboard communication (no command spam)
+- Completely seamless - vanilla pick block behavior is preserved
 
 ## Requirements
 
 - Minecraft 1.21.5
 - Fabric Loader 0.16.9+
 - Fabric API (recommended)
-- UltimateInventory plugin on the server
+- [UltimateInventory plugin](https://github.com/MaxAdams98/UltimateInventory) on the server
 
 ## Installation
 
@@ -26,27 +26,14 @@ Client-side mod for the UltimateInventory plugin. Detects middle-click pick bloc
 
 ## How It Works
 
-1. Player presses **middle-click** on a block in creative mode
-2. Mod waits for vanilla pick block to complete
-3. If vanilla pick block fails (item not in inventory), mod sets scoreboard values
-4. Server plugin monitors scoreboard and searches shulker boxes
-5. Server plugin swaps item from shulker box to hotbar
+1. When you **pick a block** (middle-click by default), vanilla Minecraft's pick block function applies first
+2. If vanilla fails to find the item in your inventory, this mod kicks in and sends a request to the UltimateInventory plugin
+3. The plugin searches your shulker boxes for the picked block
+4. If found, the plugin places the item in your hotbar, swapping with the previous item in that slot if it wasn't empty
+5. Tools and shulker boxes cannot be moved/swapped by design to protect your inventory
 
-**Note:** Normal middle-click still works for vanilla pick block. The mod only activates when vanilla pick block fails.
-
-## Building
-
-```bash
-./gradlew build
-```
-
-The mod JAR will be in `build/libs/`
-
-## Development
-
-This mod uses Fabric Loom for development. Import the project into IntelliJ IDEA or Eclipse.
+**Note:** Normal pick block still works exactly as before. The mod only activates when vanilla pick block fails to find the item in your inventory.
 
 ## License
 
 MIT License
-
