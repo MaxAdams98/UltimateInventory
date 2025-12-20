@@ -710,21 +710,19 @@ public class InventoryListener implements Listener
             ItemStack itemInTargetSlot = player.getInventory().getItem(targetSlot);
             plugin.getLogger().info("[PickBlock] Target slot " + targetSlot + " currently contains: " + (itemInTargetSlot != null ? itemInTargetSlot.getType().name() : "AIR"));
             
-            // Check if we can swap (avoid replacing shulker boxes and tools)
-            if (itemInTargetSlot != null && itemInTargetSlot.getType() != Material.AIR) {
-                if (IsShulkerBox(itemInTargetSlot.getType()) || isTool(itemInTargetSlot.getType())) {
-                    plugin.getLogger().info("[PickBlock] Target slot contains shulker box or tool, finding alternative slot...");
-                    // Can't replace shulker box or tool, find another slot
-                    targetSlot = findFreeHotbarSlotExcluding(player, targetSlot);
-                    if (targetSlot == -1) {
-                        // No suitable slot found
-                        plugin.getLogger().warning("[PickBlock] No suitable hotbar slot found (avoiding shulker boxes and tools)");
-                        player.sendMessage(ChatColor.RED + "Cannot pick block: no available hotbar slot (avoiding shulker boxes and tools)");
-                        return;
-                    }
-                    swapData.targetSlot = targetSlot;
-                    plugin.getLogger().info("[PickBlock] Found alternative slot: " + targetSlot);
+            // Check if target slot has a blacklisted item (can't swap with blacklisted items, but empty slots are fine)
+            if (itemInTargetSlot != null && itemInTargetSlot.getType() != Material.AIR && isBlacklistedForShulkerSwap(itemInTargetSlot.getType())) {
+                plugin.getLogger().info("[PickBlock] Target slot contains blacklisted item, finding alternative slot...");
+                // Find a usable slot (empty or non-blacklisted)
+                targetSlot = findUsableHotbarSlot(player);
+                if (targetSlot == -1) {
+                    // No suitable slot found
+                    plugin.getLogger().warning("[PickBlock] No suitable hotbar slot found (all slots contain blacklisted items)");
+                    player.sendMessage(ChatColor.RED + "Cannot pick block: no available hotbar slot (all slots contain items that cannot be swapped)");
+                    return;
                 }
+                swapData.targetSlot = targetSlot;
+                plugin.getLogger().info("[PickBlock] Found alternative slot: " + targetSlot);
             }
 
             // Store swap data and perform the swap
@@ -815,17 +813,15 @@ public class InventoryListener implements Listener
             // Found item in shulker box
             ItemStack itemInTargetSlot = player.getInventory().getItem(targetSlot);
             
-            // Check if we can swap (avoid replacing shulker boxes and tools)
-            if (itemInTargetSlot != null && itemInTargetSlot.getType() != Material.AIR) {
-                if (IsShulkerBox(itemInTargetSlot.getType()) || isTool(itemInTargetSlot.getType())) {
-                    // Can't replace shulker box or tool, find another slot
-                    targetSlot = findFreeHotbarSlotExcluding(player, targetSlot);
-                    if (targetSlot == -1) {
-                        player.sendMessage(ChatColor.RED + "Cannot pick block: no available hotbar slot (avoiding shulker boxes and tools)");
-                        return false;
-                    }
-                    swapData.targetSlot = targetSlot;
+            // Check if target slot has a blacklisted item (can't swap with blacklisted items, but empty slots are fine)
+            if (itemInTargetSlot != null && itemInTargetSlot.getType() != Material.AIR && isBlacklistedForShulkerSwap(itemInTargetSlot.getType())) {
+                // Find a usable slot (empty or non-blacklisted)
+                targetSlot = findUsableHotbarSlot(player);
+                if (targetSlot == -1) {
+                    player.sendMessage(ChatColor.RED + "Cannot pick block: no available hotbar slot (all slots contain items that cannot be swapped)");
+                    return false;
                 }
+                swapData.targetSlot = targetSlot;
             }
 
             // Get the shulker box item
@@ -861,7 +857,7 @@ public class InventoryListener implements Listener
         }
     }
 
-    // Helper method to find a free hotbar slot (0-8)
+    // Helper method to find a free hotbar slot (0-8) that can accept items (not blacklisted)
     private int findFreeHotbarSlot(Player player) {
         for (int i = 0; i < 9; i++) {
             ItemStack item = player.getInventory().getItem(i);
@@ -872,7 +868,7 @@ public class InventoryListener implements Listener
         return -1;
     }
 
-    // Helper method to find a free hotbar slot excluding a specific slot
+    // Helper method to find a usable hotbar slot (empty or non-blacklisted) excluding a specific slot
     private int findFreeHotbarSlotExcluding(Player player, int excludeSlot) {
         for (int i = 0; i < 9; i++) {
             if (i == excludeSlot) {
@@ -880,6 +876,27 @@ public class InventoryListener implements Listener
             }
             ItemStack item = player.getInventory().getItem(i);
             if (item == null || item.getType() == Material.AIR) {
+                return i;
+            }
+            // Check if item is blacklisted - if so, we can't swap with it
+            if (!isBlacklistedForShulkerSwap(item.getType())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Helper method to find a usable hotbar slot that doesn't contain blacklisted items
+    private int findUsableHotbarSlot(Player player) {
+        // First try to find an empty slot
+        int emptySlot = findFreeHotbarSlot(player);
+        if (emptySlot != -1) {
+            return emptySlot;
+        }
+        // If no empty slot, find a slot with a non-blacklisted item
+        for (int i = 0; i < 9; i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (item != null && !isBlacklistedForShulkerSwap(item.getType())) {
                 return i;
             }
         }
@@ -894,6 +911,41 @@ public class InventoryListener implements Listener
                name.contains("sword") || name.contains("bow") ||
                name.contains("crossbow") || name.contains("trident") ||
                name.contains("fishing_rod") || name.contains("shears");
+    }
+
+    // Blacklist of items that should not be placed into shulker boxes during swaps
+    // Note: AIR is not blacklisted because empty slots are valid swap targets
+    private boolean isBlacklistedForShulkerSwap(Material material) {
+        // Check for tools first
+        if (isTool(material)) {
+            return true;
+        }
+        
+        switch (material) {
+            // Shulker boxes (all variants)
+            case SHULKER_BOX:
+            case RED_SHULKER_BOX:
+            case MAGENTA_SHULKER_BOX:
+            case PINK_SHULKER_BOX:
+            case PURPLE_SHULKER_BOX:
+            case YELLOW_SHULKER_BOX:
+            case ORANGE_SHULKER_BOX:
+            case LIME_SHULKER_BOX:
+            case GREEN_SHULKER_BOX:
+            case CYAN_SHULKER_BOX:
+            case BLUE_SHULKER_BOX:
+            case LIGHT_BLUE_SHULKER_BOX:
+            case LIGHT_GRAY_SHULKER_BOX:
+            case GRAY_SHULKER_BOX:
+            case BROWN_SHULKER_BOX:
+            case BLACK_SHULKER_BOX:
+            case WHITE_SHULKER_BOX:
+            // Ender chests
+            case ENDER_CHEST:
+                return true;
+            default:
+                return false;
+        }
     }
 
     // Perform pick block swap: swap item from shulker with item in target slot (or place if empty)
@@ -923,6 +975,7 @@ public class InventoryListener implements Listener
         player.getInventory().setItem(swapData.targetSlot, itemFromShulker.clone());
         
         // Put the item from target slot (or air) in shulker
+        // Note: We've already validated that this item is not blacklisted before calling this method
         if (itemFromTargetSlot != null && itemFromTargetSlot.getType() != Material.AIR) {
             shulkerInventory.setItem(swapData.shulkerItemSlot, itemFromTargetSlot.clone());
         } else {
@@ -1077,6 +1130,13 @@ public class InventoryListener implements Listener
             // Item not found elsewhere in inventory, search shulker boxes
             AutoSwapData swapData = findItemInShulkers(player, selectedItem, oldSlot, newSlot);
             if (swapData != null) {
+                // Check if the last hotbar slot contains a blacklisted item - if so, can't swap (empty slots are fine)
+                ItemStack itemInLastSlot = player.getInventory().getItem(oldSlot);
+                if (itemInLastSlot != null && itemInLastSlot.getType() != Material.AIR && isBlacklistedForShulkerSwap(itemInLastSlot.getType())) {
+                    plugin.getLogger().info("[PickBlock] HotbarChange - Cannot swap: last slot " + oldSlot + " contains blacklisted item: " + itemInLastSlot.getType());
+                    return;
+                }
+                
                 plugin.getLogger().info("[PickBlock] HotbarChange - Found item in shulker, performing swap");
                 // Store swap data and open the shulker
                 playerAutoSwapData.put(player.getUniqueId(), swapData);
@@ -1240,11 +1300,19 @@ public class InventoryListener implements Listener
         // Get the item from last hotbar slot (the one we're swapping with)
         ItemStack itemFromHotbar = player.getInventory().getItem(swapData.lastHotbarSlot);
         
+        // Check if the item in the hotbar slot is blacklisted - if so, can't swap (empty slots are fine)
+        if (itemFromHotbar != null && itemFromHotbar.getType() != Material.AIR && isBlacklistedForShulkerSwap(itemFromHotbar.getType())) {
+            plugin.getLogger().warning("[AutoSwap] Cannot swap: hotbar slot " + swapData.lastHotbarSlot + " contains blacklisted item: " + itemFromHotbar.getType());
+            playerAutoSwapData.remove(player.getUniqueId());
+            return;
+        }
+        
         // Perform the swap
         // Put shulker item in target slot (where player was trying to get the item)
         player.getInventory().setItem(swapData.targetSlot, itemFromShulker.clone());
         
         // Put the item from last hotbar slot (or air) in shulker
+        // Note: We've already validated that this item is not blacklisted above
         if (itemFromHotbar != null && itemFromHotbar.getType() != Material.AIR) {
             shulkerInventory.setItem(swapData.shulkerItemSlot, itemFromHotbar.clone());
         } else {
