@@ -851,16 +851,17 @@ public class InventoryListener implements Listener
                 
                 // Play sound
                 player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
-                player.sendMessage(ChatColor.GREEN + "Picked " + blockType.name().toLowerCase().replace("_", " ") + " from shulker box");
+                // player.sendMessage(ChatColor.GREEN + "Picked " + blockType.name().toLowerCase().replace("_", " ") + " from shulker box");
             }
         } else {
             // Item not found in shulker boxes, or all slots would result in blacklisted swap
             if (result.itemFound) {
                 // Item was found but all slots would result in placing a blacklisted item (from hotbar)
                 player.sendMessage(ChatColor.RED + "Cannot pick block: all shulker slots would result in placing a blacklisted item");
-            } else {
-                player.sendMessage(ChatColor.YELLOW + "Block not found in inventory or shulker boxes");
-            }
+            } 
+            // else {
+            //     player.sendMessage(ChatColor.YELLOW + "Block not found in inventory or shulker boxes");
+            // }
         }
     }
 
@@ -951,7 +952,7 @@ public class InventoryListener implements Listener
                 
                 // Play sound
                 player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
-                player.sendMessage(ChatColor.GREEN + "Picked " + blockType.name().toLowerCase().replace("_", " ") + " from shulker box");
+                // player.sendMessage(ChatColor.GREEN + "Picked " + blockType.name().toLowerCase().replace("_", " ") + " from shulker box");
                 return true;
             } else {
                 plugin.getLogger().warning("[PickBlock] Shulker item is null or not a shulker box");
@@ -963,9 +964,10 @@ public class InventoryListener implements Listener
             if (result.itemFound) {
                 // Item was found but all slots would result in placing a blacklisted item (from hotbar)
                 player.sendMessage(ChatColor.RED + "Cannot pick block: all shulker slots would result in placing a blacklisted item");
-            } else {
-                player.sendMessage(ChatColor.YELLOW + "Block not found in inventory or shulker boxes");
             }
+            // else {
+            //     player.sendMessage(ChatColor.YELLOW + "Block not found in inventory or shulker boxes");
+            // }
             return false;
         }
     }
