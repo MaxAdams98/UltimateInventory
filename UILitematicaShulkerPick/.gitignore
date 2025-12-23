@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+build/
+!build/libs/
+*.jar
+!gradle-wrapper.jar
+
+# Development dependencies (Litematica JAR for Mixin compilation)
+# libs/
+!libs/.gitkeep
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Minecraft
+run/
+logs/
+
+# Releases (optional - uncomment if you don't want to track release JARs)
+# releases/
+

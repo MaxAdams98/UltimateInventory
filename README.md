@@ -12,6 +12,14 @@ A Spigot plugin to streamline inventory management
 
 This plugin was made for my private survival server. I've released it to the public spigot forums where others may find it useful.
 
+## Pick Block from Shulker Boxes
+
+When you pick a block (middle-click by default) and vanilla Minecraft fails to find it in your inventory, the plugin automatically searches your shulker boxes and places the item in your hotbar. The item swaps with the previous item in that slot if the slot wasn't empty. Works seamlessly with vanilla pick block - if the item is already in your inventory, vanilla behavior is used. If not, the plugin searches shulker boxes automatically.
+
+**Design:** Tools and shulker boxes cannot be moved/swapped by design to protect your inventory from accidental tool/shulker loss.
+
+**Requirements:** Install the [UltimateInventory Client Mod](UILitematicaShulkerPick/) on the client side for automatic pick block detection, or use the `/uipickblock <material>` command manually.
+
 ----
 
 ## **Caution: while every care has been taken to remove duplication bugs, some may remain.**
@@ -41,3 +49,49 @@ If you find any duplication bugs (or bugs in general) please immediately report 
 No other known issues
 
 Got a feature request? Ask on the forums or open an issue
+
+## Development
+
+### Requirements
+
+- **Java 17+** (JDK 17 or higher)
+- **Maven 3.6+** (for building the Bukkit plugin)
+- **Minecraft Server** (Paper or Spigot 1.21.3+) for testing
+
+### Building the Plugin
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/MaxAdams98/UltimateInventory.git
+   cd UltimateInventory
+   ```
+
+2. Build the plugin (choose one method):
+
+   **Option A: Build and install to server automatically**
+   ```bash
+   ./build-and-install.sh /path/to/your/server/plugins
+   ```
+   
+   Or set an environment variable for convenience:
+   ```bash
+   export SERVER_PLUGINS_PATH=/path/to/your/server/plugins
+   ./build-and-install.sh
+   ```
+
+   **Option B: Build manually**
+   ```bash
+   mvn clean package
+   ```
+   The compiled JAR will be in `target/UltimateInventory-1.7.1.jar`
+   
+   Then manually copy it to your server's `plugins/` folder
+
+### Building the Client Mod
+
+The client mod is located in the `UILitematicaShulkerPick/` directory. See [UILitematicaShulkerPick/README.md](UILitematicaShulkerPick/README.md) for build instructions.
+
+**Requirements for Client Mod:**
+- **Java 21+** (JDK 21 or higher)
+- **Gradle** (included via Gradle Wrapper)
+- **Fabric Loader** and **Fabric API** for testing
