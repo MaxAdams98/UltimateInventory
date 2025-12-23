@@ -55,6 +55,10 @@ public class LitematicaPickBlockHandler {
         }
         
         // Litematica pick block failed - search shulker boxes
+        // Temporarily disable Litematica Printer while our shulker logic runs
+        // to avoid it interacting with opened shulkers.
+        PrinterIntegration.pausePrinterForShulkerAction(20); // ~1 second
+
         String command = "uipickblock " + materialName;
         player.networkHandler.sendCommand(command);
     }

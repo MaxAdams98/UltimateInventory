@@ -34,6 +34,9 @@ public class UltimateInventoryClient implements ClientModInitializer {
     }
     
     private void onClientTick(MinecraftClient client) {
+        // Maintain temporary printer disable timer, if integration is available
+        PrinterIntegration.onClientTick();
+
         // Detect Litematica once (for logging)
         if (!litematicaDetected) {
             try {
@@ -245,6 +248,10 @@ public class UltimateInventoryClient implements ClientModInitializer {
         
         // Vanilla pick block failed - search shulker boxes
         // Server plugin will send feedback messages (found/not found)
+        // Temporarily disable Litematica Printer while our shulker logic runs
+        // to avoid it interacting with opened shulkers.
+        PrinterIntegration.pausePrinterForShulkerAction(20); // ~1 second
+
         String command = "uipickblock " + materialName;
         player.networkHandler.sendCommand(command);
     }

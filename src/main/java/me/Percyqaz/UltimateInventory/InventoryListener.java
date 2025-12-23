@@ -1105,30 +1105,28 @@ public class InventoryListener implements Listener
             // Item not found elsewhere in inventory, search shulker boxes
             // Get the item that will be swapped into the shulker (from the old hotbar slot)
             ItemStack itemToSwapIntoShulker = player.getInventory().getItem(oldSlot);
-            
+
             // Search for item in shulker boxes, checking all slots to find one where swap is valid
             FindItemResult result = findItemInShulkers(player, selectedItem, oldSlot, newSlot, itemToSwapIntoShulker);
             if (result.swapData != null) {
-                // Found valid slot - swap is already validated by findItemInShulkers
-                
-                // Store swap data and open the shulker
-                playerAutoSwapData.put(player.getUniqueId(), result.swapData);
-                // Open the shulker box that contains the item
+                // Found valid slot - perform the swap directly without opening the shulker GUI.
                 ItemStack shulkerItem;
                 if (result.swapData.shulkerSlot == 40) {
                     shulkerItem = player.getInventory().getItemInOffHand();
                 } else {
                     shulkerItem = player.getInventory().getItem(result.swapData.shulkerSlot);
                 }
-                
+
                 if (shulkerItem != null && IsShulkerBox(shulkerItem.getType())) {
-                    Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                        OpenShulkerbox(player, shulkerItem);
-                        // Perform swap after a short delay to ensure shulker is open
-                        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                            performAutoSwap(player);
-                        }, 2L);
-                    }, 1L);
+                    performPickBlockSwap(player, result.swapData, shulkerItem);
+
+                    // Ensure the player is now holding the swapped-in item
+                    if (result.swapData.targetSlot >= 0 && result.swapData.targetSlot < 9) {
+                        player.getInventory().setHeldItemSlot(result.swapData.targetSlot);
+                    }
+
+                    // Play a small feedback sound (matches pick block behaviour)
+                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
                 }
             }
         }
