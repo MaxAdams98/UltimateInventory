@@ -43,36 +43,26 @@ class LitematicaPickBlockListenerImpl {
     }
     
     public Object onSchematicPickBlockStart(boolean closest) {
-        System.out.println("[UltimateInventory] Litematica pick block START - closest: " + closest);
         return getSuccessResult();
     }
-    
+
     // Use Object for parameters we don't actually use - Java will match the interface at runtime
     public Object onSchematicPickBlockPreGather(Object schematicWorld, Object pos, Object expectedState) {
-        System.out.println("[UltimateInventory] Litematica pick block PRE_GATHER");
         return getSuccessResult();
     }
-    
-    public Object onSchematicPickBlockPrePick(Object schematicWorld, Object pos, Object expectedState, ItemStack stack) {
-        System.out.println("[UltimateInventory] Litematica pick block PRE_PICK - item: " + (stack.isEmpty() ? "empty" : stack.getItem().toString()));
 
+    public Object onSchematicPickBlockPrePick(Object schematicWorld, Object pos, Object expectedState, ItemStack stack) {
         // Don't overwrite if we're currently processing a pick block event
         if (!isProcessingPickBlock) {
             lastPickBlockStack = stack.copy();
-        } else {
-            System.out.println("[UltimateInventory] Skipping PRE_PICK - currently processing another pick block event");
         }
 
         return getSuccessResult();
     }
-    
-    public void onSchematicPickBlockSuccess() {
-        System.out.println("[UltimateInventory] Litematica pick block SUCCESS callback received");
 
+    public void onSchematicPickBlockSuccess() {
         // The mixin handler (LitematicaMixinHandler) does the actual shulker search logic
         // This event listener just tracks operations for debugging purposes
-        String itemName = lastPickBlockStack.isEmpty() ? "unknown" : lastPickBlockStack.getItem().toString();
-        System.out.println("[UltimateInventory] Event listener: Litematica completed pick block for " + itemName + " - mixin handler will check if shulker search is needed");
 
         // Reset state for next operation
         lastPickBlockStack = ItemStack.EMPTY;

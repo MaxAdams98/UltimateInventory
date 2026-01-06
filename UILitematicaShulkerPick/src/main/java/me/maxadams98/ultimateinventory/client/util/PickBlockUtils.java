@@ -57,7 +57,6 @@ public class PickBlockUtils {
                             sendCommandMethod = method;
                             // Make private methods accessible
                             sendCommandMethod.setAccessible(true);
-                            System.out.println("[UltimateInventory] Found sendCommand method: " + method.getName() + " - " + method.toString());
                             break;
                         }
                     }
@@ -70,7 +69,6 @@ public class PickBlockUtils {
                 for (String methodName : possibleNames) {
                     try {
                         sendCommandMethod = networkHandlerClass.getDeclaredMethod(methodName, String.class);
-                        System.out.println("[UltimateInventory] Found sendCommand method by name: " + methodName);
                         break;
                     } catch (NoSuchMethodException e) {
                         // Try next name
@@ -79,14 +77,6 @@ public class PickBlockUtils {
             }
 
             if (sendCommandMethod == null) {
-                // List all available methods for debugging (excluding mixin handlers)
-                System.out.println("[UltimateInventory] Available methods in network handler:");
-                for (var method : networkHandlerClass.getDeclaredMethods()) {
-                    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0] == String.class && !method.getName().contains("$")) {
-                        System.out.println("[UltimateInventory]   " + method.getReturnType().getSimpleName() + " " + method.getName() + "(" +
-                                          java.util.Arrays.stream(method.getParameterTypes()).map(Class::getSimpleName).toList() + ")");
-                    }
-                }
                 throw new RuntimeException("No suitable sendCommand method found");
             }
 
@@ -119,33 +109,25 @@ public class PickBlockUtils {
                     sendCommandMethod.invoke(player.networkHandler, command, null, null, false);
                 } else {
                     // Unknown signature - try with just the command string
-                    System.out.println("[UltimateInventory] Unknown method signature, trying with command only: " + sendCommandMethod.toString());
                     sendCommandMethod.invoke(player.networkHandler, command);
                 }
             } catch (Exception invokeException) {
-                System.out.println("[UltimateInventory] Failed to invoke sendCommand method: " + invokeException.getMessage());
                 throw invokeException;
             }
-
-            // Command sent successfully
-            System.out.println("[UltimateInventory] Command sent successfully: " + command);
 
             // If we get here without exception and haven't checked compatibility yet
             if (!compatibilityChecked) {
                 compatibilityChecked = true;
                 failedCommandCount = 0; // Reset failure count on success
-                System.out.println("[UltimateInventory] Server compatibility verified - commands working");
             }
         } catch (Exception e) {
             failedCommandCount++;
-            System.out.println("[UltimateInventory] Command failed (" + failedCommandCount + "/" + MAX_COMMAND_FAILURES + "): " + e.getMessage());
 
             // Only disable after multiple failures
             if (failedCommandCount >= MAX_COMMAND_FAILURES && serverHasPlugin) {
                 serverHasPlugin = false;
-                System.out.println("[UltimateInventory] ERROR: Server doesn't appear to have UltimateInventory plugin (after " + failedCommandCount + " failed attempts)!");
+                System.out.println("[UltimateInventory] ERROR: Server doesn't appear to have UltimateInventory plugin!");
                 System.out.println("[UltimateInventory] This mod requires the UltimateInventory plugin on the server.");
-                System.out.println("[UltimateInventory] Please install the plugin or disable this mod.");
 
                 // Rate limit error messages to avoid spam
                 long currentTime = System.currentTimeMillis();
@@ -172,7 +154,6 @@ public class PickBlockUtils {
         // Check cooldown to prevent spam
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastShulkerSearchTime < SHULKER_SEARCH_COOLDOWN * 50) { // Convert ticks to ms
-            System.out.println("[UltimateInventory] Shulker search on cooldown, skipping");
             return;
         }
 
@@ -180,10 +161,6 @@ public class PickBlockUtils {
         if (lastSearchedItemType != null &&
             lastSearchedItemType == targetItem.getItem() &&
             currentTime - lastSearchedItemTime < ITEM_SEARCH_COOLDOWN * 50) {
-            long remainingMs = (ITEM_SEARCH_COOLDOWN * 50) - (currentTime - lastSearchedItemTime);
-            int remainingTicks = (int) Math.ceil(remainingMs / 50.0);
-            System.out.println("[UltimateInventory] Recently searched for " + targetItem.getItem().toString() +
-                             ", skipping to prevent repetitive swapping (" + remainingTicks + " ticks remaining)");
             return;
         }
 
@@ -237,20 +214,15 @@ public class PickBlockUtils {
 
         var itemType = item.getItem();
 
-        // Log what we're looking for
-        System.out.println("[UltimateInventory] Looking for item: " + item.getItem().toString());
-
         // Check currently held item (main hand)
         ItemStack heldItem = player.getMainHandStack();
         if (!heldItem.isEmpty() && heldItem.getItem() == itemType && !isBlacklistedForShulkerSwap(heldItem.getItem())) {
-            System.out.println("[UltimateInventory] Found item in main hand (currently held)");
             return true;
         }
 
         // Check offhand
         ItemStack offhandItem = player.getOffHandStack();
         if (!offhandItem.isEmpty() && offhandItem.getItem() == itemType && !isBlacklistedForShulkerSwap(offhandItem.getItem())) {
-            System.out.println("[UltimateInventory] Found item in offhand");
             return true;
         }
 
@@ -258,12 +230,10 @@ public class PickBlockUtils {
         for (int i = 0; i < 9; i++) {
             ItemStack hotbarItem = player.getInventory().getStack(i);
             if (!hotbarItem.isEmpty() && hotbarItem.getItem() == itemType && !isBlacklistedForShulkerSwap(hotbarItem.getItem())) {
-                System.out.println("[UltimateInventory] Found item in non-blacklisted hotbar slot " + i);
                 return true; // Found in non-blacklisted hotbar slot
             }
         }
 
-        System.out.println("[UltimateInventory] Item not found in accessible slots (main hand, offhand, or non-blacklisted hotbar)");
         return false;
     }
     
@@ -342,14 +312,10 @@ public class PickBlockUtils {
 
         if (itemAvailable) {
             // Item is available - reset missing counter and allow future searches
-            if (itemMissingTicks > 0) {
-                System.out.println("[UltimateInventory] Item became available, resetting missing counter");
-            }
             itemMissingTicks = 0;
-            lastCheckedItem = ItemStack.EMPTY;
+            lastCheckedItemType = null; // Reset missing item tracking
             // Also reset search tracking since item is now available
             resetItemSearchTracking(targetItem);
-            lastCheckedItemType = null; // Reset missing item tracking
             return false;
         }
 
@@ -358,17 +324,14 @@ public class PickBlockUtils {
             // Different item - start tracking
             lastCheckedItemType = targetItem.getItem();
             itemMissingTicks = 1;
-            System.out.println("[UltimateInventory] Started tracking missing item: " + targetItem.getItem().toString() + " (tick 1/" + MISSING_ITEM_DELAY + ")");
             return false;
         }
 
         // Same item - increment counter
         itemMissingTicks++;
-        System.out.println("[UltimateInventory] Item still missing (tick " + itemMissingTicks + "/" + MISSING_ITEM_DELAY + ")");
 
         if (itemMissingTicks >= MISSING_ITEM_DELAY) {
             // Item has been missing long enough - allow search
-            System.out.println("[UltimateInventory] Item missing for " + itemMissingTicks + " ticks, triggering shulker search");
             itemMissingTicks = 0; // Reset for next time
             lastCheckedItemType = null;
             return true;
@@ -387,7 +350,6 @@ public class PickBlockUtils {
         failedCommandCount = 0;
         lastSearchedItemType = null;
         lastSearchedItemTime = 0;
-        System.out.println("[UltimateInventory] Reset server compatibility check for new connection");
     }
 
     /**
@@ -398,7 +360,6 @@ public class PickBlockUtils {
         if (lastSearchedItemType != null && lastSearchedItemType == item.getItem()) {
             lastSearchedItemType = null;
             lastSearchedItemTime = 0;
-            System.out.println("[UltimateInventory] Reset search tracking for item: " + item.getItem().toString());
         }
     }
 
