@@ -21,9 +21,12 @@ public class LitematicaMixinHandler {
         
         System.out.println("[UltimateInventory] Checking Litematica pick block result for: " + targetItem.getItem().toString());
         
-        // Check if we should trigger a shulker search (includes delay to prevent false positives during item usage)
-        if (PickBlockUtils.shouldTriggerShulkerSearch(player, targetItem)) {
-            // Item has been missing long enough to warrant a search
+        // Check if the item is available in accessible slots
+        boolean itemAvailable = PickBlockUtils.itemExistsInNonBlacklistedHotbarSlot(player, targetItem);
+
+        if (!itemAvailable) {
+            // Item is not available - check if we can trigger shulker search immediately
+            System.out.println("[UltimateInventory] Item not available in hotbar - checking if we can trigger shulker search");
 
             // Check if all hotbar slots are blacklisted (no room for swapping)
             if (PickBlockUtils.areAllHotbarSlotsBlacklisted(player)) {
@@ -40,11 +43,13 @@ public class LitematicaMixinHandler {
                 System.out.println("[UltimateInventory] Item not found anywhere in inventory - triggering shulker search");
             }
 
-            // Trigger our shulker box search
+            // Send the command immediately since this is called directly by Litematica's pick block
             System.out.println("[UltimateInventory] Triggering shulker box search for: " + targetItem.getItem().toString());
             // Pause printer to prevent conflicts during shulker operations
             PrinterIntegration.pausePrinterForShulkerAction(20); // 1 second at 20 TPS
             PickBlockUtils.sendPickBlockCommand(player, targetItem);
+        } else {
+            System.out.println("[UltimateInventory] Item is available in hotbar - no shulker search needed");
         }
     }
 }
