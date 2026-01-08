@@ -34,4 +34,9 @@ anvil:
   enable: false
   override: false
   command: ''
+pickBlock:
+  enable: true
+  requireCreative: false
+  # autoHotbarSwap has been removed due to problematic behavior
+  # autoHotbarSwap: false
 usePermissions: false

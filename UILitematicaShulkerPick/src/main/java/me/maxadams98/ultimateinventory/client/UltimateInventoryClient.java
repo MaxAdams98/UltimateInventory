@@ -31,7 +31,7 @@ public class UltimateInventoryClient implements ClientModInitializer {
             PrinterIntegration.onClientTick();
         });
 
-        System.out.println("[UltimateInventory] Litematica support mod initialized with printer safety integration");
+        System.out.println("[UltimateInventory] Initialized");
     }
 }
 

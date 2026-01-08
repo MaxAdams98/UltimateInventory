@@ -1206,51 +1206,13 @@ public class InventoryListener implements Listener
     @EventHandler(priority = EventPriority.NORMAL)
     public void HotbarChange(PlayerItemHeldEvent e) {
         Player player = e.getPlayer();
-        int newSlot = e.getNewSlot();
         int oldSlot = e.getPreviousSlot();
-        
-        // Get the item in the new slot
-        ItemStack selectedItem = player.getInventory().getItem(newSlot);
-        
-        // Only proceed if there's an item selected
-        if (selectedItem == null || selectedItem.getType() == Material.AIR) {
-            // Update last slot for next time
-            playerLastHotbarSlot.put(player.getUniqueId(), oldSlot);
-            return;
-        }
-        
-        // Check if this item type exists elsewhere in inventory (excluding current slot)
-        // If it only exists in the current slot, it means they don't have it elsewhere
-        if (!itemExistsInInventory(player, selectedItem, newSlot)) {
-            // Item not found elsewhere in inventory, search shulker boxes
-            // Get the item that will be swapped into the shulker (from the old hotbar slot)
-            ItemStack itemToSwapIntoShulker = player.getInventory().getItem(oldSlot);
 
-            // Search for item in shulker boxes, checking all slots to find one where swap is valid
-            FindItemResult result = findItemInShulkers(player, selectedItem, oldSlot, newSlot, itemToSwapIntoShulker);
-            if (result.swapData != null) {
-                // Found valid slot - perform the swap directly without opening the shulker GUI.
-                ItemStack shulkerItem;
-                if (result.swapData.shulkerSlot == 40) {
-                    shulkerItem = player.getInventory().getItemInOffHand();
-                } else {
-                    shulkerItem = player.getInventory().getItem(result.swapData.shulkerSlot);
-                }
+        // Auto hotbar swap functionality has been removed due to problematic logic
+        // The previous implementation incorrectly assumed that items only in hotbar slots
+        // should be automatically swapped from shulker boxes, causing unwanted behavior
+        // Players should only get items from shulker boxes via explicit pick block commands
 
-                if (shulkerItem != null && IsShulkerBox(shulkerItem.getType())) {
-                    performPickBlockSwap(player, result.swapData, shulkerItem);
-
-                    // Ensure the player is now holding the swapped-in item
-                    if (result.swapData.targetSlot >= 0 && result.swapData.targetSlot < 9) {
-                        player.getInventory().setHeldItemSlot(result.swapData.targetSlot);
-                    }
-
-                    // Play a small feedback sound (matches pick block behaviour)
-                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.5f, 1.2f);
-                }
-            }
-        }
-        
         // Update last slot for next time
         playerLastHotbarSlot.put(player.getUniqueId(), oldSlot);
     }

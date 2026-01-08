@@ -22,6 +22,20 @@ When you pick a block (middle-click by default) and vanilla Minecraft fails to f
 - **For vanilla pick block:** Works automatically on Paper 1.21.10+ servers - no client mod required! The plugin uses Paper's native `PlayerPickBlockEvent` to detect pick block requests.
 - **For Litematica integration:** If you use Litematica's pick block feature, install the [UltimateInventory Litematica Shulker Pick Mod](UILitematicaShulkerPick/) on the client side for automatic detection, or use the `/uipickblock <material>` command manually.
 
+## Configuration
+
+The plugin can be configured via the `config.yml` file in your server's `plugins/UltimateInventory/` directory. Here are the available options:
+
+### Pick Block Settings
+```yaml
+pickBlock:
+  enable: true              # Enable/disable pick block from shulker boxes
+  requireCreative: false    # Require players to be in creative mode for pick block
+  # autoHotbarSwap has been removed due to problematic behavior
+```
+
+**Important:** Pick block functionality only works through explicit commands (`/uipickblock <material>`) or the client mod. Automatic hotbar swapping when scrolling has been removed as it caused unwanted behavior where items would be unexpectedly swapped from shulker boxes.
+
 ----
 
 ## **Caution: while every care has been taken to remove duplication bugs, some may remain.**

@@ -12,13 +12,14 @@ cd "$SCRIPT_DIR"
 GRADLE_PROPERTIES="gradle.properties"
 RELEASES_DIR="releases"
 
-# Get increment type (default: patch)
-INCREMENT_TYPE="${1:-patch}"
+# Get increment type (default: none)
+INCREMENT_TYPE="${1:-none}"
 
 # Validate increment type
-if [[ ! "$INCREMENT_TYPE" =~ ^(patch|minor|major)$ ]]; then
+if [[ ! "$INCREMENT_TYPE" =~ ^(patch|minor|major|none)$ ]]; then
     echo "Error: Invalid increment type '$INCREMENT_TYPE'"
     echo "Usage: $0 [patch|minor|major]"
+    echo "  If no increment type is specified, version will not be incremented"
     exit 1
 fi
 
@@ -59,33 +60,39 @@ PATCH="${VERSION_PARTS[2]:-0}"
 
 # Increment version based on type
 case "$INCREMENT_TYPE" in
+    none)
+        NEW_VERSION="$CURRENT_VERSION"
+        echo "Version will not be incremented (keeping $NEW_VERSION)"
+        ;;
     major)
         MAJOR=$((MAJOR + 1))
         MINOR=0
         PATCH=0
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
         ;;
     minor)
         MINOR=$((MINOR + 1))
         PATCH=0
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
         ;;
     patch)
         PATCH=$((PATCH + 1))
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
         ;;
 esac
-
-NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 echo "New version: $NEW_VERSION"
 
-# Update version in gradle.properties
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    sed -i '' "s/^mod_version=.*/mod_version=$NEW_VERSION/" "$GRADLE_PROPERTIES"
-else
-    # Linux
-    sed -i "s/^mod_version=.*/mod_version=$NEW_VERSION/" "$GRADLE_PROPERTIES"
+# Update version in gradle.properties only if incrementing
+if [[ "$INCREMENT_TYPE" != "none" ]]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s/^mod_version=.*/mod_version=$NEW_VERSION/" "$GRADLE_PROPERTIES"
+    else
+        # Linux
+        sed -i "s/^mod_version=.*/mod_version=$NEW_VERSION/" "$GRADLE_PROPERTIES"
+    fi
+    echo "Updated $GRADLE_PROPERTIES with new version: $NEW_VERSION"
 fi
-
-echo "Updated $GRADLE_PROPERTIES with new version: $NEW_VERSION"
 
 # Clean and build
 echo "Building mod..."
@@ -118,6 +125,12 @@ echo "  Version: $NEW_VERSION"
 echo "  Minecraft: $MINECRAFT_VERSION"
 echo "  Release file: $RELEASES_DIR/$(basename "$NEW_JAR")"
 echo ""
-echo "To commit the version change:"
-echo "  git add $GRADLE_PROPERTIES $RELEASES_DIR/"
-echo "  git commit -m \"Bump version to $NEW_VERSION for MC $MINECRAFT_VERSION\""
+if [[ "$INCREMENT_TYPE" != "none" ]]; then
+    echo "To commit the version change:"
+    echo "  git add $GRADLE_PROPERTIES $RELEASES_DIR/"
+    echo "  git commit -m \"Bump version to $NEW_VERSION for MC $MINECRAFT_VERSION\""
+else
+    echo "To commit the release:"
+    echo "  git add $RELEASES_DIR/"
+    echo "  git commit -m \"Release $NEW_VERSION for MC $MINECRAFT_VERSION\""
+fi

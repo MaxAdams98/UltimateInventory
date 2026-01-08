@@ -36,11 +36,7 @@ class LitematicaInvocationHandler implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
-        // Only log methods we haven't seen before to reduce spam
-        if (!methodName.equals("getName")) { // getName is called frequently
-            System.out.println("[UltimateInventory] Litematica called: " + methodName);
-        }
-        
+
         // Route to our implementation
         try {
             Method implMethod = impl.getClass().getMethod(methodName, method.getParameterTypes());
@@ -65,12 +61,10 @@ class LitematicaInvocationHandler implements InvocationHandler {
                 return implMethod.invoke(impl, args);
             } catch (NoSuchMethodException e2) {
                 // Method not implemented - return default result instead of crashing
-                System.out.println("[UltimateInventory] Method not implemented: " + methodName + " - returning default result");
                 return getDefaultResult(method);
             }
         } catch (Exception e) {
-            // Any other exception during method invocation - log and return default
-            System.out.println("[UltimateInventory] Error invoking method " + methodName + ": " + e.getMessage());
+            // Any other exception during method invocation - return default result
             return getDefaultResult(method);
         }
     }
